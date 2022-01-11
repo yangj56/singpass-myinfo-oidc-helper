@@ -5,7 +5,7 @@ import { createClient } from "../client/axios-client";
 import { SingpassMyInfoError } from "../util/error/SingpassMyinfoError";
 import { decrypt, generateJWT, verify } from "../util/JoseUtil";
 import { logger } from "../util/Logger";
-import { TokenResponse, TokenPayload } from "./singpass-helper";
+import { TokenPayload, TokenResponse } from "./singpass-helper";
 
 export type SupportedAlgorithm = "ES256" | "ES384" | "ES512";
 
