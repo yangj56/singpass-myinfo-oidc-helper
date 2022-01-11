@@ -1,0 +1,44 @@
+import { compactDecrypt, compactVerify, KeyLike, SignJWT } from "jose";
+import { TextDecoder } from "util";
+import { SingpassMyInfoError } from "./error/SingpassMyinfoError";
+import { logger } from "./Logger";
+
+export async function generateJWT(
+	clientId: string,
+	openIdDiscovery: string,
+	keyId: string,
+	jwksSignPrivateKey: KeyLike,
+	algorithm: "ES256" | "ES384" | "ES512"
+) {
+	let jwt: string;
+	logger.log(`-----> ${algorithm}`);
+	try {
+		jwt = await new SignJWT({
+			sub: clientId,
+			aud: openIdDiscovery,
+			iss: clientId,
+		})
+			.setProtectedHeader({
+				typ: "JWT",
+				alg: algorithm,
+				kid: keyId,
+			})
+			.sign(jwksSignPrivateKey);
+	} catch (err) {
+		logger.log(err);
+		throw new SingpassMyInfoError("test to generate JWT with sign key");
+	}
+	return jwt;
+}
+
+export async function decrypt(prviateKey: KeyLike | Uint8Array, jwe: string) {
+	const { plaintext } = await compactDecrypt(jwe, prviateKey);
+
+	return new TextDecoder().decode(plaintext);
+}
+
+export async function verify(publicKey: KeyLike | Uint8Array, jws: string) {
+	const { payload, protectedHeader } = await compactVerify(jws, publicKey);
+
+	return new TextDecoder().decode(payload);
+}
