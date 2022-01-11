@@ -11,7 +11,6 @@ export async function generateJWT(
 	algorithm: "ES256" | "ES384" | "ES512"
 ) {
 	let jwt: string;
-	logger.log(`-----> ${algorithm}`);
 	try {
 		jwt = await new SignJWT({
 			sub: clientId,
@@ -23,6 +22,8 @@ export async function generateJWT(
 				alg: algorithm,
 				kid: keyId,
 			})
+			.setIssuedAt()
+			.setExpirationTime('2m')
 			.sign(jwksSignPrivateKey);
 	} catch (err) {
 		logger.log(err);
@@ -33,12 +34,10 @@ export async function generateJWT(
 
 export async function decrypt(prviateKey: KeyLike | Uint8Array, jwe: string) {
 	const { plaintext } = await compactDecrypt(jwe, prviateKey);
-
 	return new TextDecoder().decode(plaintext);
 }
 
 export async function verify(publicKey: KeyLike | Uint8Array, jws: string) {
-	const { payload, protectedHeader } = await compactVerify(jws, publicKey);
-
+	const { payload } = await compactVerify(jws, publicKey);
 	return new TextDecoder().decode(payload);
 }
