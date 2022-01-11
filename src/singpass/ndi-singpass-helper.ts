@@ -14,7 +14,6 @@ export interface NdiOidcHelperConstructor {
 	logoutUrl?: string;
 	tokenUrl: string;
 	clientID: string;
-	clientSecret: string;
 	redirectUri: string;
 	singpassJWKSUrl: string;
 	algorithmn: SupportedAlgorithm;
@@ -49,6 +48,7 @@ export class NdicOidcHelper {
 		this.tokenUrl = props.tokenUrl;
 		this.clientID = props.clientID;
 		this.redirectUri = props.redirectUri;
+		this.singpassJWKSUrl = props.singpassJWKSUrl;
 		this.algorithm = props.algorithmn;
 		this.jwsKid = props.jwsKid;
 		this.additionalHeaders = props.additionalHeaders || {};
@@ -60,8 +60,13 @@ export class NdicOidcHelper {
 		jwsKey: string,
 		algorithmn: SupportedAlgorithm
 	) {
-		this.jweKey = await importPKCS8(jweKey, algorithmn);
-		this.jwsKey = await importPKCS8(jwsKey, algorithmn);
+		try {
+			this.jweKey = await importPKCS8(jweKey, algorithmn);
+			this.jwsKey = await importPKCS8(jwsKey, algorithmn);
+		} catch (err) {
+			logger.error(err);
+			throw new SingpassMyInfoError("Unable to load jwe and/or jws key");
+		}
 	}
 
 	public getClientAssertionJWT = async () => {
@@ -124,7 +129,7 @@ export class NdicOidcHelper {
 			return verifiedJws;
 		} catch (e) {
 			logger.error("Failed to get token payload", e);
-			throw e;
+			throw new SingpassMyInfoError("Failed to get token payload");
 		}
 	}
 
@@ -140,12 +145,12 @@ export class NdicOidcHelper {
 		const singpassJWKResponse = await this.axiosClient.get(
 			this.singpassJWKSUrl
 		);
-		const singpassJWS = singpassJWKResponse.data.keys.filter(
+		const singpassJWS = singpassJWKResponse.data.keys.find(
 			(x: { use: string }) => x.use === type
-		)[0];
+		);
 		const singpassSigPublicKey = await importJWK(singpassJWS, "ES512");
 		if (!singpassSigPublicKey) {
-			throw new Error("Singpass public sig key is not found");
+			throw new SingpassMyInfoError("Singpass public sig key is not found");
 		}
 		return singpassSigPublicKey;
 	}
