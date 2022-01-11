@@ -17,7 +17,6 @@ const Logger_1 = require("./Logger");
 function generateJWT(clientId, openIdDiscovery, keyId, jwksSignPrivateKey, algorithm) {
     return __awaiter(this, void 0, void 0, function* () {
         let jwt;
-        Logger_1.logger.log(`-----> ${algorithm}`);
         try {
             jwt = yield new jose_1.SignJWT({
                 sub: clientId,
@@ -29,6 +28,8 @@ function generateJWT(clientId, openIdDiscovery, keyId, jwksSignPrivateKey, algor
                 alg: algorithm,
                 kid: keyId,
             })
+                .setIssuedAt()
+                .setExpirationTime('2m')
                 .sign(jwksSignPrivateKey);
         }
         catch (err) {
@@ -48,7 +49,7 @@ function decrypt(prviateKey, jwe) {
 exports.decrypt = decrypt;
 function verify(publicKey, jws) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { payload, protectedHeader } = yield jose_1.compactVerify(jws, publicKey);
+        const { payload } = yield jose_1.compactVerify(jws, publicKey);
         return new util_1.TextDecoder().decode(payload);
     });
 }

@@ -6,7 +6,6 @@ export interface NdiOidcHelperConstructor {
     logoutUrl?: string;
     tokenUrl: string;
     clientID: string;
-    clientSecret: string;
     redirectUri: string;
     singpassJWKSUrl: string;
     algorithmn: SupportedAlgorithm;

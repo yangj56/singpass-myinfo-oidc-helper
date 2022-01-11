@@ -50,6 +50,7 @@ class NdicOidcHelper {
         this.tokenUrl = props.tokenUrl;
         this.clientID = props.clientID;
         this.redirectUri = props.redirectUri;
+        this.singpassJWKSUrl = props.singpassJWKSUrl;
         this.algorithm = props.algorithmn;
         this.jwsKid = props.jwsKid;
         this.additionalHeaders = props.additionalHeaders || {};
@@ -57,8 +58,14 @@ class NdicOidcHelper {
     }
     importKeys(jweKey, jwsKey, algorithmn) {
         return __awaiter(this, void 0, void 0, function* () {
-            this.jweKey = yield jose_1.importPKCS8(jweKey, algorithmn);
-            this.jwsKey = yield jose_1.importPKCS8(jwsKey, algorithmn);
+            try {
+                this.jweKey = yield jose_1.importPKCS8(jweKey, algorithmn);
+                this.jwsKey = yield jose_1.importPKCS8(jwsKey, algorithmn);
+            }
+            catch (err) {
+                Logger_1.logger.error(err);
+                throw new SingpassMyinfoError_1.SingpassMyInfoError("Unable to load jwe and/or jws key");
+            }
         });
     }
     /**
@@ -75,7 +82,7 @@ class NdicOidcHelper {
             }
             catch (e) {
                 Logger_1.logger.error("Failed to get token payload", e);
-                throw e;
+                throw new SingpassMyinfoError_1.SingpassMyInfoError("Failed to get token payload");
             }
         });
     }
@@ -91,10 +98,10 @@ class NdicOidcHelper {
     obtainSingpassPublicKey(type) {
         return __awaiter(this, void 0, void 0, function* () {
             const singpassJWKResponse = yield this.axiosClient.get(this.singpassJWKSUrl);
-            const singpassJWS = singpassJWKResponse.data.keys.filter((x) => x.use === type)[0];
+            const singpassJWS = singpassJWKResponse.data.keys.find((x) => x.use === type);
             const singpassSigPublicKey = yield jose_1.importJWK(singpassJWS, "ES512");
             if (!singpassSigPublicKey) {
-                throw new Error("Singpass public sig key is not found");
+                throw new SingpassMyinfoError_1.SingpassMyInfoError("Singpass public sig key is not found");
             }
             return singpassSigPublicKey;
         });
