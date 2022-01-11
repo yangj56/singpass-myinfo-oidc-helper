@@ -644,5 +644,4 @@ $RECYCLE.BIN/
 
 # End of https://www.gitignore.io/api/node,java,xcode,macos,linux,swift,windows,intellij,reactnative,objective-c,androidstudio,visualstudiocode
 
-dist
 jest.json
