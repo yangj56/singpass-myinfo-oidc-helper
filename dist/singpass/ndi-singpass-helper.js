@@ -80,6 +80,20 @@ class NdiOidcHelper {
             }
         });
     }
+    extractNricAndUuidFromPayload(payload) {
+        const { sub } = payload;
+        if (sub) {
+            const extractionRegex = /s=([STFG]\d{7}[A-Z]).*,u=(.*)/i;
+            const matchResult = sub.match(extractionRegex);
+            if (!matchResult) {
+                throw Error("Token payload sub property is invalid, does not contain valid NRIC and uuid string");
+            }
+            const nric = matchResult[1];
+            const uuid = matchResult[2];
+            return { nric, uuid };
+        }
+        throw Error("Token payload sub property is not defined");
+    }
     verifyToken(token, nonce) {
         return __awaiter(this, void 0, void 0, function* () {
             const singpassPublicKey = yield this.obtainSingpassPublicKey("sig");
