@@ -1,5 +1,5 @@
 import { AxiosInstance, AxiosRequestConfig } from "axios";
-import { TokenPayload } from "./singpass-helper";
+import { JWTPayload } from "jose";
 export interface NDITokenResponse {
     access_token: string;
     token_type: string;
@@ -32,8 +32,8 @@ export declare class NdiOidcHelper {
     private importKeys;
     getClientAssertionJWT: () => Promise<string>;
     getTokens: (authCode: string, axiosRequestConfig?: AxiosRequestConfig) => Promise<NDITokenResponse>;
-    getIdTokenPayload(tokens: NDITokenResponse, nonce: string): Promise<import("jose").JWTPayload>;
-    extractNricAndUuidFromPayload(payload: TokenPayload): {
+    getIdTokenPayload(tokens: NDITokenResponse, nonce: string): Promise<JWTPayload>;
+    extractNricAndUuidFromPayload(payload: JWTPayload): {
         nric: string;
         uuid: string;
     };
