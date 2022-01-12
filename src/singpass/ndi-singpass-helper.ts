@@ -5,6 +5,7 @@ import { createClient } from "../client/axios-client";
 import { SingpassMyInfoError } from "../util/error/SingpassMyinfoError";
 import { decrypt, generateJWT } from "../util/JoseUtil";
 import { logger } from "../util/Logger";
+import { TokenPayload } from "./singpass-helper";
 
 export interface NDITokenResponse {
 	access_token: string;
@@ -123,6 +124,32 @@ export class NdiOidcHelper {
 			logger.error("Failed to get token payload", e);
 			throw new SingpassMyInfoError("Failed to get token payload");
 		}
+	}
+
+
+	public extractNricAndUuidFromPayload(payload: TokenPayload): {
+		nric: string;
+		uuid: string;
+	} {
+		const { sub } = payload;
+
+		if (sub) {
+			const extractionRegex = /s=([STFG]\d{7}[A-Z]).*,u=(.*)/i;
+			const matchResult = sub.match(extractionRegex);
+
+			if (!matchResult) {
+				throw Error(
+					"Token payload sub property is invalid, does not contain valid NRIC and uuid string"
+				);
+			}
+
+			const nric = matchResult[1];
+			const uuid = matchResult[2];
+
+			return { nric, uuid };
+		}
+
+		throw Error("Token payload sub property is not defined");
 	}
 
 	private async verifyToken(token: string, nonce: string) {
