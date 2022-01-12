@@ -1,11 +1,10 @@
 import { AxiosInstance, AxiosRequestConfig } from "axios";
-import { importJWK, importPKCS8, jwtVerify, KeyLike } from "jose";
+import { importJWK, importPKCS8, JWTPayload, jwtVerify, KeyLike } from "jose";
 import * as querystringUtil from "querystring";
 import { createClient } from "../client/axios-client";
 import { SingpassMyInfoError } from "../util/error/SingpassMyinfoError";
 import { decrypt, generateJWT } from "../util/JoseUtil";
 import { logger } from "../util/Logger";
-import { TokenPayload } from "./singpass-helper";
 
 export interface NDITokenResponse {
 	access_token: string;
@@ -126,7 +125,7 @@ export class NdiOidcHelper {
 		}
 	}
 
-	public extractNricAndUuidFromPayload(payload: TokenPayload): {
+	public extractNricAndUuidFromPayload(payload: JWTPayload): {
 		nric: string;
 		uuid: string;
 	} {
