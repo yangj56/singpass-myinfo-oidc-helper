@@ -1,4 +1,4 @@
-import { compactDecrypt, compactVerify, KeyLike, SignJWT } from "jose";
+import { compactDecrypt, compactVerify, jwtVerify, KeyLike, SignJWT } from "jose";
 import { TextDecoder } from "util";
 import { SingpassMyInfoError } from "./error/SingpassMyinfoError";
 import { logger } from "./Logger";
@@ -35,9 +35,4 @@ export async function generateJWT(
 export async function decrypt(prviateKey: KeyLike | Uint8Array, jwe: string) {
 	const { plaintext } = await compactDecrypt(jwe, prviateKey);
 	return new TextDecoder().decode(plaintext);
-}
-
-export async function verify(publicKey: KeyLike | Uint8Array, jws: string) {
-	const { payload } = await compactVerify(jws, publicKey);
-	return new TextDecoder().decode(payload);
 }
