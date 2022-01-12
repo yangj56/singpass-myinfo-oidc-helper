@@ -1,9 +1,11 @@
 import { AxiosInstance, AxiosRequestConfig } from "axios";
-import { TokenPayload, TokenResponse } from "./singpass-helper";
+export interface NDITokenResponse {
+    access_token: string;
+    token_type: string;
+    id_token: string;
+}
 export declare type SupportedAlgorithm = "ES256" | "ES384" | "ES512";
 export interface NdiOidcHelperConstructor {
-    authorizationUrl: string;
-    logoutUrl?: string;
     tokenUrl: string;
     clientID: string;
     redirectUri: string;
@@ -11,15 +13,10 @@ export interface NdiOidcHelperConstructor {
     algorithmn: SupportedAlgorithm;
     jwsKid: string;
     jwsPrivateKey: string;
-    jweKid: string;
     jwePrivateKey: string;
-    /**
-     * Headers already added by the client:
-     * Content-Type, Cookie (refreshSession, logoutOfSession)
-     */
     additionalHeaders?: Record<string, string>;
 }
-export declare class NdicOidcHelper {
+export declare class NdiOidcHelper {
     private axiosClient;
     private tokenUrl;
     private clientID;
@@ -31,27 +28,14 @@ export declare class NdicOidcHelper {
     private singpassJWKSUrl;
     private additionalHeaders?;
     constructor(props: NdiOidcHelperConstructor);
-    importKeys(jweKey: string, jwsKey: string, algorithmn: SupportedAlgorithm): Promise<void>;
+    private importKeys;
     getClientAssertionJWT: () => Promise<string>;
-    getTokens: (authCode: string, axiosRequestConfig?: AxiosRequestConfig) => Promise<TokenResponse>;
-    /**
-     * Decrypts the ID Token JWT inside the TokenResponse to get the payload
-     * Use extractNricAndUuidFromPayload on the returned Token Payload to get the NRIC and UUID
-     */
-    getIdTokenPayload(tokens: TokenResponse, nonce: string): Promise<void>;
-    verifyToken(token: string, nonce: string): Promise<void>;
+    getTokens: (authCode: string, axiosRequestConfig?: AxiosRequestConfig) => Promise<NDITokenResponse>;
+    getIdTokenPayload(tokens: NDITokenResponse, nonce: string): Promise<import("jose").JWTPayload>;
+    private verifyToken;
     private obtainSingpassPublicKey;
-    /**
-     * Returns the nric and uuid from the token payload
-     */
-    extractNricAndUuidFromPayload(payload: TokenPayload): {
-        nric: string;
-        uuid: string;
-    };
-    private validateStatus;
     _testExports: {
         singpassClient: AxiosInstance;
-        validateStatusFn: (status: any) => boolean;
     };
 }
 //# sourceMappingURL=ndi-singpass-helper.d.ts.map

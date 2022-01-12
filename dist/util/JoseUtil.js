@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verify = exports.decrypt = exports.generateJWT = void 0;
+exports.decrypt = exports.generateJWT = void 0;
 const jose_1 = require("jose");
 const util_1 = require("util");
 const SingpassMyinfoError_1 = require("./error/SingpassMyinfoError");
@@ -47,11 +47,4 @@ function decrypt(prviateKey, jwe) {
     });
 }
 exports.decrypt = decrypt;
-function verify(publicKey, jws) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { payload } = yield jose_1.compactVerify(jws, publicKey);
-        return new util_1.TextDecoder().decode(payload);
-    });
-}
-exports.verify = verify;
 //# sourceMappingURL=JoseUtil.js.map

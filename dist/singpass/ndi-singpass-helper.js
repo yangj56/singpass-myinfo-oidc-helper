@@ -9,14 +9,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NdicOidcHelper = void 0;
+exports.NdiOidcHelper = void 0;
 const jose_1 = require("jose");
 const querystringUtil = require("querystring");
 const axios_client_1 = require("../client/axios-client");
 const SingpassMyinfoError_1 = require("../util/error/SingpassMyinfoError");
 const JoseUtil_1 = require("../util/JoseUtil");
 const Logger_1 = require("../util/Logger");
-class NdicOidcHelper {
+class NdiOidcHelper {
     constructor(props) {
         this.axiosClient = axios_client_1.createClient({
             timeout: 10000,
@@ -45,7 +45,6 @@ class NdicOidcHelper {
         });
         this._testExports = {
             singpassClient: this.axiosClient,
-            validateStatusFn: this.validateStatus,
         };
         this.tokenUrl = props.tokenUrl;
         this.clientID = props.clientID;
@@ -68,17 +67,12 @@ class NdicOidcHelper {
             }
         });
     }
-    /**
-     * Decrypts the ID Token JWT inside the TokenResponse to get the payload
-     * Use extractNricAndUuidFromPayload on the returned Token Payload to get the NRIC and UUID
-     */
     getIdTokenPayload(tokens, nonce) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { id_token } = tokens;
                 const decryptedJwe = yield JoseUtil_1.decrypt(this.jweKey, id_token);
-                const verifiedJws = yield this.verifyToken(decryptedJwe, nonce);
-                return verifiedJws;
+                return yield this.verifyToken(decryptedJwe, nonce);
             }
             catch (e) {
                 Logger_1.logger.error("Failed to get token payload", e);
@@ -89,10 +83,11 @@ class NdicOidcHelper {
     verifyToken(token, nonce) {
         return __awaiter(this, void 0, void 0, function* () {
             const singpassPublicKey = yield this.obtainSingpassPublicKey("sig");
-            const verifiedIDTokenPayload = yield JoseUtil_1.verify(singpassPublicKey, token);
-            if (verifiedIDTokenPayload !== nonce) {
-                throw new SingpassMyinfoError_1.SingpassMyInfoError("Failed to verify the nonce");
+            const { payload } = yield jose_1.jwtVerify(token, singpassPublicKey);
+            if (!payload || payload.nonce !== nonce) {
+                throw new Error("Failed to verify the nonce");
             }
+            return payload;
         });
     }
     obtainSingpassPublicKey(type) {
@@ -101,31 +96,11 @@ class NdicOidcHelper {
             const singpassJWS = singpassJWKResponse.data.keys.find((x) => x.use === type);
             const singpassSigPublicKey = yield jose_1.importJWK(singpassJWS, "ES512");
             if (!singpassSigPublicKey) {
-                throw new SingpassMyinfoError_1.SingpassMyInfoError("Singpass public sig key is not found");
+                throw new Error("Singpass public sig key is not found");
             }
             return singpassSigPublicKey;
         });
     }
-    /**
-     * Returns the nric and uuid from the token payload
-     */
-    extractNricAndUuidFromPayload(payload) {
-        const { sub } = payload;
-        if (sub) {
-            const extractionRegex = /s=([STFG]\d{7}[A-Z]).*,u=(.*)/i;
-            const matchResult = sub.match(extractionRegex);
-            if (!matchResult) {
-                throw Error("Token payload sub property is invalid, does not contain valid NRIC and uuid string");
-            }
-            const nric = matchResult[1];
-            const uuid = matchResult[2];
-            return { nric, uuid };
-        }
-        throw Error("Token payload sub property is not defined");
-    }
-    validateStatus(status) {
-        return status === 302 || (status >= 200 && status < 300);
-    }
 }
-exports.NdicOidcHelper = NdicOidcHelper;
+exports.NdiOidcHelper = NdiOidcHelper;
 //# sourceMappingURL=ndi-singpass-helper.js.map
