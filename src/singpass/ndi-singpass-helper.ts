@@ -12,17 +12,17 @@ export interface NDITokenResponse {
 	id_token: string;
 }
 
-export type SupportedAlgorithm = "ES256" | "ES384" | "ES512";
+export type Supportedalgorithm = "ES256" | "ES384" | "ES512";
 
 export interface NdiOidcHelperConstructor {
 	tokenUrl: string;
 	clientID: string;
 	redirectUri: string;
 	singpassJWKSUrl: string;
-	algorithmn: SupportedAlgorithm;
+	algorithm: Supportedalgorithm;
 	jwsKid: string;
-	jwsPrivateKey: string;
-	jwePrivateKey: string;
+	jwsVerifyKey: string;
+	jweDecryptKey: string;
 	additionalHeaders?: Record<string, string>;
 }
 
@@ -34,10 +34,13 @@ export class NdiOidcHelper {
 	private tokenUrl: string;
 	private clientID: string;
 	private redirectUri: string;
-	private algorithm: SupportedAlgorithm;
+	private algorithm: Supportedalgorithm;
 	private jwsKid: string;
-	private jwsKey: KeyLike;
-	private jweKey: KeyLike;
+	private jwsVerifyKeyString: string;
+	private jweDecryptKeyString: string;
+
+	private jwsVerifyKey: KeyLike;
+	private jweDecryptKey: KeyLike;
 	private singpassJWKSUrl: string;
 	private additionalHeaders?: Record<string, string>;
 
@@ -46,35 +49,24 @@ export class NdiOidcHelper {
 		this.clientID = props.clientID;
 		this.redirectUri = props.redirectUri;
 		this.singpassJWKSUrl = props.singpassJWKSUrl;
-		this.algorithm = props.algorithmn;
+		this.algorithm = props.algorithm;
 		this.jwsKid = props.jwsKid;
+		this.jweDecryptKeyString = props.jweDecryptKey;
+		this.jwsVerifyKeyString = props.jwsVerifyKey;
 		this.additionalHeaders = props.additionalHeaders || {};
-		this.importKeys(props.jwePrivateKey, props.jwsPrivateKey, props.algorithmn);
 	}
 
-	private async importKeys(
-		jweKey: string,
-		jwsKey: string,
-		algorithmn: SupportedAlgorithm
-	) {
+	public async initialize() {
 		try {
-			this.jweKey = await importPKCS8(jweKey, algorithmn);
-			this.jwsKey = await importPKCS8(jwsKey, algorithmn);
+			this.jweDecryptKey = await importPKCS8(this.jweDecryptKeyString, this.algorithm);
+			this.jwsVerifyKey = await importPKCS8(this.jwsVerifyKeyString, this.algorithm);
 		} catch (err) {
 			logger.error(err);
 			throw new SingpassMyInfoError("Unable to load jwe and/or jws key");
 		}
 	}
 
-	public getClientAssertionJWT = async () => {
-		return await generateJWT(
-			this.clientID,
-			this.singpassJWKSUrl,
-			this.jwsKid,
-			this.jwsKey,
-			this.algorithm
-		);
-	};
+
 
 	public getTokens = async (
 		authCode: string,
@@ -117,7 +109,8 @@ export class NdiOidcHelper {
 	public async getIdTokenPayload(tokens: NDITokenResponse, nonce: string) {
 		try {
 			const { id_token } = tokens;
-			const decryptedJwe = await decrypt(this.jweKey, id_token);
+			const decryptedJwe = await decrypt(this.jweDecryptKey, id_token);
+			logger.info(decryptedJwe);
 			return await this.verifyToken(decryptedJwe, nonce);
 		} catch (e) {
 			logger.error("Failed to get token payload", e);
@@ -150,6 +143,16 @@ export class NdiOidcHelper {
 		throw Error("Token payload sub property is not defined");
 	}
 
+	private getClientAssertionJWT = async () => {
+		return await generateJWT(
+			this.clientID,
+			this.singpassJWKSUrl,
+			this.jwsKid,
+			this.jwsVerifyKey,
+			this.algorithm
+		);
+	};
+
 	private async verifyToken(token: string, nonce: string) {
 		const singpassPublicKey = await this.obtainSingpassPublicKey("sig");
 		const { payload } = await jwtVerify(token, singpassPublicKey);
@@ -168,7 +171,7 @@ export class NdiOidcHelper {
 		);
 		const singpassSigPublicKey = await importJWK(singpassJWS, "ES512");
 		if (!singpassSigPublicKey) {
-			throw new Error("Singpass public sig key is not found");
+			throw new Error(`Singpass public ${type} key is not found`);
 		}
 		return singpassSigPublicKey;
 	}
