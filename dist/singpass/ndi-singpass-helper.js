@@ -21,9 +21,6 @@ class NdiOidcHelper {
         this.axiosClient = axios_client_1.createClient({
             timeout: 10000,
         });
-        this.getClientAssertionJWT = () => __awaiter(this, void 0, void 0, function* () {
-            return yield JoseUtil_1.generateJWT(this.clientID, this.singpassJWKSUrl, this.jwsKid, this.jwsKey, this.algorithm);
-        });
         this.getTokens = (authCode, axiosRequestConfig) => __awaiter(this, void 0, void 0, function* () {
             const clientAssertionJWT = yield this.getClientAssertionJWT();
             const params = {
@@ -43,6 +40,9 @@ class NdiOidcHelper {
             }
             return response.data;
         });
+        this.getClientAssertionJWT = () => __awaiter(this, void 0, void 0, function* () {
+            return yield JoseUtil_1.generateJWT(this.clientID, this.singpassJWKSUrl, this.jwsKid, this.jwsVerifyKey, this.algorithm);
+        });
         this._testExports = {
             singpassClient: this.axiosClient,
         };
@@ -50,16 +50,17 @@ class NdiOidcHelper {
         this.clientID = props.clientID;
         this.redirectUri = props.redirectUri;
         this.singpassJWKSUrl = props.singpassJWKSUrl;
-        this.algorithm = props.algorithmn;
+        this.algorithm = props.algorithm;
         this.jwsKid = props.jwsKid;
+        this.jweDecryptKeyString = props.jweDecryptKey;
+        this.jwsVerifyKeyString = props.jwsVerifyKey;
         this.additionalHeaders = props.additionalHeaders || {};
-        this.importKeys(props.jwePrivateKey, props.jwsPrivateKey, props.algorithmn);
     }
-    importKeys(jweKey, jwsKey, algorithmn) {
+    initialize() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                this.jweKey = yield jose_1.importPKCS8(jweKey, algorithmn);
-                this.jwsKey = yield jose_1.importPKCS8(jwsKey, algorithmn);
+                this.jweDecryptKey = yield jose_1.importPKCS8(this.jweDecryptKeyString, this.algorithm);
+                this.jwsVerifyKey = yield jose_1.importPKCS8(this.jwsVerifyKeyString, this.algorithm);
             }
             catch (err) {
                 Logger_1.logger.error(err);
@@ -71,7 +72,8 @@ class NdiOidcHelper {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { id_token } = tokens;
-                const decryptedJwe = yield JoseUtil_1.decrypt(this.jweKey, id_token);
+                const decryptedJwe = yield JoseUtil_1.decrypt(this.jweDecryptKey, id_token);
+                Logger_1.logger.info(decryptedJwe);
                 return yield this.verifyToken(decryptedJwe, nonce);
             }
             catch (e) {
@@ -110,7 +112,7 @@ class NdiOidcHelper {
             const singpassJWS = singpassJWKResponse.data.keys.find((x) => x.use === type);
             const singpassSigPublicKey = yield jose_1.importJWK(singpassJWS, "ES512");
             if (!singpassSigPublicKey) {
-                throw new Error("Singpass public sig key is not found");
+                throw new Error(`Singpass public ${type} key is not found`);
             }
             return singpassSigPublicKey;
         });

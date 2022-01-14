@@ -12,7 +12,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.decrypt = exports.generateJWT = void 0;
 const jose_1 = require("jose");
 const util_1 = require("util");
-const SingpassMyinfoError_1 = require("./error/SingpassMyinfoError");
 const Logger_1 = require("./Logger");
 function generateJWT(clientId, openIdDiscovery, keyId, jwksSignPrivateKey, algorithm) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -34,7 +33,7 @@ function generateJWT(clientId, openIdDiscovery, keyId, jwksSignPrivateKey, algor
         }
         catch (err) {
             Logger_1.logger.log(err);
-            throw new SingpassMyinfoError_1.SingpassMyInfoError("test to generate JWT with sign key");
+            throw new Error("Unable to generate JWT with sign key");
         }
         return jwt;
     });

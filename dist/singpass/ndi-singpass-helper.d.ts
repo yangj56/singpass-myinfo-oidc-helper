@@ -5,16 +5,16 @@ export interface NDITokenResponse {
     token_type: string;
     id_token: string;
 }
-export declare type SupportedAlgorithm = "ES256" | "ES384" | "ES512";
+export declare type Supportedalgorithm = "ES256" | "ES384" | "ES512";
 export interface NdiOidcHelperConstructor {
     tokenUrl: string;
     clientID: string;
     redirectUri: string;
     singpassJWKSUrl: string;
-    algorithmn: SupportedAlgorithm;
+    algorithm: Supportedalgorithm;
     jwsKid: string;
-    jwsPrivateKey: string;
-    jwePrivateKey: string;
+    jwsVerifyKey: string;
+    jweDecryptKey: string;
     additionalHeaders?: Record<string, string>;
 }
 export declare class NdiOidcHelper {
@@ -24,19 +24,21 @@ export declare class NdiOidcHelper {
     private redirectUri;
     private algorithm;
     private jwsKid;
-    private jwsKey;
-    private jweKey;
+    private jwsVerifyKeyString;
+    private jweDecryptKeyString;
+    private jwsVerifyKey;
+    private jweDecryptKey;
     private singpassJWKSUrl;
     private additionalHeaders?;
     constructor(props: NdiOidcHelperConstructor);
-    private importKeys;
-    getClientAssertionJWT: () => Promise<string>;
+    initialize(): Promise<void>;
     getTokens: (authCode: string, axiosRequestConfig?: AxiosRequestConfig) => Promise<NDITokenResponse>;
     getIdTokenPayload(tokens: NDITokenResponse, nonce: string): Promise<JWTPayload>;
     extractNricAndUuidFromPayload(payload: JWTPayload): {
         nric: string;
         uuid: string;
     };
+    private getClientAssertionJWT;
     private verifyToken;
     private obtainSingpassPublicKey;
     _testExports: {
