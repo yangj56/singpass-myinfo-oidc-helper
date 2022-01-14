@@ -1,6 +1,5 @@
-import { compactDecrypt, compactVerify, jwtVerify, KeyLike, SignJWT } from "jose";
+import { compactDecrypt, KeyLike, SignJWT } from "jose";
 import { TextDecoder } from "util";
-import { SingpassMyInfoError } from "./error/SingpassMyinfoError";
 import { logger } from "./Logger";
 
 export async function generateJWT(
@@ -27,7 +26,7 @@ export async function generateJWT(
 			.sign(jwksSignPrivateKey);
 	} catch (err) {
 		logger.log(err);
-		throw new SingpassMyInfoError("test to generate JWT with sign key");
+		throw new Error("Unable to generate JWT with sign key");
 	}
 	return jwt;
 }
