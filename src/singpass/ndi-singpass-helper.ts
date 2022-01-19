@@ -18,6 +18,7 @@ export interface NdiOidcHelperConstructor {
 	tokenUrl: string;
 	clientID: string;
 	redirectUri: string;
+	singpassOpenIdDiscoveryUrl: string;
 	singpassJWKSUrl: string;
 	algorithm: Supportedalgorithm;
 	jwsKid: string;
@@ -38,9 +39,9 @@ export class NdiOidcHelper {
 	private jwsKid: string;
 	private jwsVerifyKeyString: string;
 	private jweDecryptKeyString: string;
-
 	private jwsVerifyKey: KeyLike;
 	private jweDecryptKey: KeyLike;
+	private singpassOpenIdDiscoveryUrl: string;
 	private singpassJWKSUrl: string;
 	private additionalHeaders?: Record<string, string>;
 
@@ -48,6 +49,7 @@ export class NdiOidcHelper {
 		this.tokenUrl = props.tokenUrl;
 		this.clientID = props.clientID;
 		this.redirectUri = props.redirectUri;
+		this.singpassOpenIdDiscoveryUrl = props.singpassOpenIdDiscoveryUrl;
 		this.singpassJWKSUrl = props.singpassJWKSUrl;
 		this.algorithm = props.algorithm;
 		this.jwsKid = props.jwsKid;
@@ -65,8 +67,6 @@ export class NdiOidcHelper {
 			throw new SingpassMyInfoError("Unable to load jwe and/or jws key");
 		}
 	}
-
-
 
 	public getTokens = async (
 		authCode: string,
@@ -146,7 +146,7 @@ export class NdiOidcHelper {
 	private getClientAssertionJWT = async () => {
 		return await generateJWT(
 			this.clientID,
-			this.singpassJWKSUrl,
+			this.singpassOpenIdDiscoveryUrl,
 			this.jwsKid,
 			this.jwsVerifyKey,
 			this.algorithm
