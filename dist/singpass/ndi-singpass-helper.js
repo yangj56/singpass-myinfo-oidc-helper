@@ -41,7 +41,7 @@ class NdiOidcHelper {
             return response.data;
         });
         this.getClientAssertionJWT = () => __awaiter(this, void 0, void 0, function* () {
-            return yield JoseUtil_1.generateJWT(this.clientID, this.singpassJWKSUrl, this.jwsKid, this.jwsVerifyKey, this.algorithm);
+            return yield JoseUtil_1.generateJWT(this.clientID, this.singpassOpenIdDiscoveryUrl, this.jwsKid, this.jwsVerifyKey, this.algorithm);
         });
         this._testExports = {
             singpassClient: this.axiosClient,
@@ -49,6 +49,7 @@ class NdiOidcHelper {
         this.tokenUrl = props.tokenUrl;
         this.clientID = props.clientID;
         this.redirectUri = props.redirectUri;
+        this.singpassOpenIdDiscoveryUrl = props.singpassOpenIdDiscoveryUrl;
         this.singpassJWKSUrl = props.singpassJWKSUrl;
         this.algorithm = props.algorithm;
         this.jwsKid = props.jwsKid;

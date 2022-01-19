@@ -10,6 +10,7 @@ export interface NdiOidcHelperConstructor {
     tokenUrl: string;
     clientID: string;
     redirectUri: string;
+    singpassOpenIdDiscoveryUrl: string;
     singpassJWKSUrl: string;
     algorithm: Supportedalgorithm;
     jwsKid: string;
@@ -28,6 +29,7 @@ export declare class NdiOidcHelper {
     private jweDecryptKeyString;
     private jwsVerifyKey;
     private jweDecryptKey;
+    private singpassOpenIdDiscoveryUrl;
     private singpassJWKSUrl;
     private additionalHeaders?;
     constructor(props: NdiOidcHelperConstructor);
