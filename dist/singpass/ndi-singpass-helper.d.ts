@@ -16,6 +16,7 @@ export interface NdiOidcHelperConstructor {
     jwsKid: string;
     jwsVerifyKey: string;
     jweDecryptKey: string;
+    logger?: any;
     additionalHeaders?: Record<string, string>;
 }
 export declare class NdiOidcHelper {
@@ -32,6 +33,7 @@ export declare class NdiOidcHelper {
     private singpassOpenIdDiscoveryUrl;
     private singpassJWKSUrl;
     private additionalHeaders?;
+    private logger;
     constructor(props: NdiOidcHelperConstructor);
     initialize(): Promise<void>;
     getTokens: (authCode: string, axiosRequestConfig?: AxiosRequestConfig) => Promise<NDITokenResponse>;
