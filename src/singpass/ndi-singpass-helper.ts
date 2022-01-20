@@ -75,38 +75,43 @@ export class NdiOidcHelper {
 		authCode: string,
 		axiosRequestConfig?: AxiosRequestConfig
 	): Promise<NDITokenResponse> => {
-		const clientAssertionJWT = await this.getClientAssertionJWT();
-		const params = {
-			grant_type: "authorization_code",
-			code: authCode,
-			client_id: this.clientID,
-			client_assertion: clientAssertionJWT,
-			redirect_uri: this.redirectUri,
-			client_assertion_type:
-				"urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-		};
-		const body = querystringUtil.stringify(params);
+		try {
+			const clientAssertionJWT = await this.getClientAssertionJWT();
+			const params = {
+				grant_type: "authorization_code",
+				code: authCode,
+				client_id: this.clientID,
+				client_assertion: clientAssertionJWT,
+				redirect_uri: this.redirectUri,
+				client_assertion_type:
+					"urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+			};
+			const body = querystringUtil.stringify(params);
 
-		const config = {
-			headers: {
-				...this.additionalHeaders,
-				"content-type": "application/x-www-form-urlencoded",
-			},
-			...axiosRequestConfig,
-		};
-		const response = await this.axiosClient.post<NDITokenResponse>(
-			this.tokenUrl,
-			body,
-			config
-		);
-		if (!response.data.id_token) {
-			this.logger.error(
-				"Failed to get ID token: invalid response data",
-				response.data
+			const config = {
+				headers: {
+					...this.additionalHeaders,
+					"content-type": "application/x-www-form-urlencoded",
+				},
+				...axiosRequestConfig,
+			};
+			const response = await this.axiosClient.post<NDITokenResponse>(
+				this.tokenUrl,
+				body,
+				config
 			);
-			throw new SingpassMyInfoError("Failed to get ID token");
+			if (!response.data.id_token) {
+				this.logger.error(
+					"Failed to get ID token: invalid response data",
+					response.data
+				);
+				throw new Error("Failed to get ID token");
+			}
+			return response.data;
+		} catch (e) {
+			this.logger.error("Failed to get token from singpass token endpoint", e);
+			throw new SingpassMyInfoError("Failed to get tokens");
 		}
-		return response.data;
 	};
 
 	public async getIdTokenPayload(tokens: NDITokenResponse, nonce: string) {
@@ -117,7 +122,7 @@ export class NdiOidcHelper {
 			return await this.verifyToken(decryptedJwe, nonce);
 		} catch (e) {
 			this.logger.error("Failed to get token payload", e);
-			throw new SingpassMyInfoError("Failed to get token payload");
+			throw new SingpassMyInfoError("Failed to get id token payload");
 		}
 	}
 
@@ -143,7 +148,6 @@ export class NdiOidcHelper {
 
 			return { nric, uuid };
 		}
-
 		throw Error("Token payload sub property is not defined");
 	}
 
