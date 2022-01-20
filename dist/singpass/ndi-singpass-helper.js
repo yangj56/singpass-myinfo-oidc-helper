@@ -22,23 +22,29 @@ class NdiOidcHelper {
             timeout: 10000,
         });
         this.getTokens = (authCode, axiosRequestConfig) => __awaiter(this, void 0, void 0, function* () {
-            const clientAssertionJWT = yield this.getClientAssertionJWT();
-            const params = {
-                grant_type: "authorization_code",
-                code: authCode,
-                client_id: this.clientID,
-                client_assertion: clientAssertionJWT,
-                redirect_uri: this.redirectUri,
-                client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-            };
-            const body = querystringUtil.stringify(params);
-            const config = Object.assign({ headers: Object.assign(Object.assign({}, this.additionalHeaders), { "content-type": "application/x-www-form-urlencoded" }) }, axiosRequestConfig);
-            const response = yield this.axiosClient.post(this.tokenUrl, body, config);
-            if (!response.data.id_token) {
-                this.logger.error("Failed to get ID token: invalid response data", response.data);
-                throw new SingpassMyinfoError_1.SingpassMyInfoError("Failed to get ID token");
+            try {
+                const clientAssertionJWT = yield this.getClientAssertionJWT();
+                const params = {
+                    grant_type: "authorization_code",
+                    code: authCode,
+                    client_id: this.clientID,
+                    client_assertion: clientAssertionJWT,
+                    redirect_uri: this.redirectUri,
+                    client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                };
+                const body = querystringUtil.stringify(params);
+                const config = Object.assign({ headers: Object.assign(Object.assign({}, this.additionalHeaders), { "content-type": "application/x-www-form-urlencoded" }) }, axiosRequestConfig);
+                const response = yield this.axiosClient.post(this.tokenUrl, body, config);
+                if (!response.data.id_token) {
+                    this.logger.error("Failed to get ID token: invalid response data", response.data);
+                    throw new Error("Failed to get ID token");
+                }
+                return response.data;
             }
-            return response.data;
+            catch (e) {
+                this.logger.error("Failed to get token from singpass token endpoint", e);
+                throw new SingpassMyinfoError_1.SingpassMyInfoError("Failed to get tokens");
+            }
         });
         this.getClientAssertionJWT = () => __awaiter(this, void 0, void 0, function* () {
             return yield JoseUtil_1.generateJWT(this.clientID, this.singpassOpenIdDiscoveryUrl, this.jwsKid, this.jwsVerifyKey, this.algorithm);
@@ -80,7 +86,7 @@ class NdiOidcHelper {
             }
             catch (e) {
                 this.logger.error("Failed to get token payload", e);
-                throw new SingpassMyinfoError_1.SingpassMyInfoError("Failed to get token payload");
+                throw new SingpassMyinfoError_1.SingpassMyInfoError("Failed to get id token payload");
             }
         });
     }
