@@ -5,7 +5,8 @@ import { NdiOidcHelperConstructor, NdiOidcHelper } from "../ndi-singpass-helper"
 const mockTokenUrl = "https://mocksingpass.sg/token";
 const mockClientId = "CLIENT-ID";
 const mockRedirectUri = "http://mockme.sg/callback";
-const mockOpenIdDiscovery = "https://mock.singpass.gov.sg";
+const mockSingpassOpenIdDiscoveryUrl = "https://mock.singpass.gov.sg";
+const mocksingpassJWKSUrl = "https://mock.singpass.gov.sg";
 const mockAuthCode = "auth-code";
 const testKey = `-----BEGIN PRIVATE KEY-----
 MIHtAgEAMBAGByqGSM49AgEGBSuBBAAjBIHVMIHSAgEBBEGPMg1SnaD49tQSIlvA
@@ -39,7 +40,8 @@ describe("NdiSingpass Helper", () => {
 	const props: NdiOidcHelperConstructor = {
 		algorithm: 'ES512',
 		jwsKid: mockJwsKid,
-		singpassJWKSUrl: mockOpenIdDiscovery,
+		singpassJWKSUrl: mocksingpassJWKSUrl,
+		singpassOpenIdDiscoveryUrl: mockSingpassOpenIdDiscoveryUrl,
 		tokenUrl: mockTokenUrl,
 		clientID: mockClientId,
 		redirectUri: mockRedirectUri,
