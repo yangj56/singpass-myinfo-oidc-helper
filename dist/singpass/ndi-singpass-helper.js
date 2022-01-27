@@ -36,13 +36,12 @@ class NdiOidcHelper {
                 const config = Object.assign({ headers: Object.assign(Object.assign({}, this.additionalHeaders), { "content-type": "application/x-www-form-urlencoded" }) }, axiosRequestConfig);
                 const response = yield this.axiosClient.post(this.tokenUrl, body, config);
                 if (!response.data.id_token) {
-                    this.logger.error("Failed to get ID token: invalid response data", response.data);
                     throw new Error("Failed to get ID token");
                 }
                 return response.data;
             }
             catch (e) {
-                this.logger.error("Failed to get token from singpass token endpoint", e);
+                Logger_1.logger.error("Failed to get token from singpass token endpoint", e);
                 throw new SingpassMyinfoError_1.SingpassMyInfoError("Failed to get tokens");
             }
         });
@@ -61,7 +60,6 @@ class NdiOidcHelper {
         this.jwsKid = props.jwsKid;
         this.jweDecryptKeyString = props.jweDecryptKey;
         this.jwsVerifyKeyString = props.jwsVerifyKey;
-        this.logger = props.logger || Logger_1.logger;
         this.additionalHeaders = props.additionalHeaders || {};
     }
     initialize() {
@@ -71,7 +69,7 @@ class NdiOidcHelper {
                 this.jwsVerifyKey = yield jose_1.importPKCS8(this.jwsVerifyKeyString, this.algorithm);
             }
             catch (err) {
-                this.logger.error(err);
+                Logger_1.logger.error(err);
                 throw new SingpassMyinfoError_1.SingpassMyInfoError("Unable to load jwe and/or jws key");
             }
         });
@@ -81,11 +79,11 @@ class NdiOidcHelper {
             try {
                 const { id_token } = tokens;
                 const decryptedJwe = yield JoseUtil_1.decrypt(this.jweDecryptKey, id_token);
-                this.logger.info(decryptedJwe);
+                Logger_1.logger.info(decryptedJwe);
                 return yield this.verifyToken(decryptedJwe, nonce);
             }
             catch (e) {
-                this.logger.error("Failed to get token payload", e);
+                Logger_1.logger.error("Failed to get token payload", e);
                 throw new SingpassMyinfoError_1.SingpassMyInfoError("Failed to get id token payload");
             }
         });
