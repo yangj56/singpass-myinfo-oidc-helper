@@ -24,7 +24,6 @@ export interface NdiOidcHelperConstructor {
 	jwsKid: string;
 	jwsVerifyKey: string;
 	jweDecryptKey: string;
-	logger?: any;
 	additionalHeaders?: Record<string, string>;
 }
 
@@ -45,7 +44,6 @@ export class NdiOidcHelper {
 	private singpassOpenIdDiscoveryUrl: string;
 	private singpassJWKSUrl: string;
 	private additionalHeaders?: Record<string, string>;
-	private logger: any;
 
 	constructor(props: NdiOidcHelperConstructor) {
 		this.tokenUrl = props.tokenUrl;
@@ -57,7 +55,6 @@ export class NdiOidcHelper {
 		this.jwsKid = props.jwsKid;
 		this.jweDecryptKeyString = props.jweDecryptKey;
 		this.jwsVerifyKeyString = props.jwsVerifyKey;
-		this.logger = props.logger || logger;
 		this.additionalHeaders = props.additionalHeaders || {};
 	}
 
@@ -66,7 +63,7 @@ export class NdiOidcHelper {
 			this.jweDecryptKey = await importPKCS8(this.jweDecryptKeyString, this.algorithm);
 			this.jwsVerifyKey = await importPKCS8(this.jwsVerifyKeyString, this.algorithm);
 		} catch (err) {
-			this.logger.error(err);
+			logger.error(err);
 			throw new SingpassMyInfoError("Unable to load jwe and/or jws key");
 		}
 	}
@@ -101,15 +98,11 @@ export class NdiOidcHelper {
 				config
 			);
 			if (!response.data.id_token) {
-				this.logger.error(
-					"Failed to get ID token: invalid response data",
-					response.data
-				);
 				throw new Error("Failed to get ID token");
 			}
 			return response.data;
 		} catch (e) {
-			this.logger.error("Failed to get token from singpass token endpoint", e);
+			logger.error("Failed to get token from singpass token endpoint", e);
 			throw new SingpassMyInfoError("Failed to get tokens");
 		}
 	};
@@ -118,10 +111,10 @@ export class NdiOidcHelper {
 		try {
 			const { id_token } = tokens;
 			const decryptedJwe = await decrypt(this.jweDecryptKey, id_token);
-			this.logger.info(decryptedJwe);
+			logger.info(decryptedJwe);
 			return await this.verifyToken(decryptedJwe, nonce);
 		} catch (e) {
-			this.logger.error("Failed to get token payload", e);
+			logger.error("Failed to get token payload", e);
 			throw new SingpassMyInfoError("Failed to get id token payload");
 		}
 	}
